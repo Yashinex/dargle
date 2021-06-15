@@ -3,4 +3,4 @@
 *.ovpn
 *.ppk
 /.ssh
-dargle_proc/dargle_webapp/venv/
+dargle_proc/dargle_webapp/venv/*
