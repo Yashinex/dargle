@@ -18,7 +18,7 @@ async def get_page(url, hits, session, sem):
     # clean up any whitespace or newlines
     url = url.rstrip('\n')
     
-    max_retries = 1
+    max_retries = 2
     timeout = 4
 
     for attempt in range(max_retries):
@@ -50,6 +50,8 @@ async def get_page(url, hits, session, sem):
         except Exception as e:
             timestamp = datetime.now()
             err_msg = ("{u},{s},{h},{t},{m}").format(u=url, s=str(e), h=hits,t=timestamp.strftime("%m/%d/%Y %H:%M:%S"), m="N/A")
+            #TODO: remove this debug line
+            print(err_msg)
             return err_msg
 
 
@@ -76,6 +78,9 @@ async def parce_for_title(text):
 
 # the main working method.  it mainly just triggers the reading head and sets up stuff
 async def main(innie,outie,header):
+
+    #TODO: remove debugline
+    print("start of main")
 
     # setup the csv file into dict format
     infile = open(innie, 'r')
@@ -136,7 +141,7 @@ def proccess_links(innie,outie,header):
     start_time = time.time()
 
     # windows bug workaround 'https://stackoverflow.com/a/66772242'
-    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+    #asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
     # this sets up and takes down the working loop and stuff.  also handles closing "sessions" cause that is complicated apparently
     asyncio.run(main(innie,outie,header))
