@@ -1,4 +1,4 @@
-import request, dargle_orm, sys
+import request, dargle_orm, sys, aio_request
 
 innie = sys.argv[1]
 outie = sys.argv[2]
@@ -11,6 +11,11 @@ request.line_count(innie)
 
 if check == True:
     csv = request.process_links(innie,outie,header)
+
+    # uncomment for async version of requests
+    #csv = aio_request.proccess_links(innie,outie,header)
+
+    
 # For troubleshooting/skipping requests
 else:
     csv = outie

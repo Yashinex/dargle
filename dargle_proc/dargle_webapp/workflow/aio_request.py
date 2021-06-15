@@ -1,13 +1,10 @@
 import aiohttp
 import asyncio
 import csv
+import time
 
 from bs4 import BeautifulSoup
 from datetime import datetime
-
-
-#start timer
-#start_time = time.time()
 
 
 # the reading head
@@ -22,7 +19,7 @@ async def get_page(url, hits, session, sem):
     
     #proxy setup
     #TODO: setup proxy 'session.get(url, proxy=proxy)'
-    #proxy = "socks5h://localhost:9050"
+    proxy = "socks5h://localhost:9050"
 
     max_retries = 1
     timeout = 4
@@ -31,7 +28,7 @@ async def get_page(url, hits, session, sem):
         if attempt != 0:
             timeout = pow(timeout, 2)
         try:
-            async with sem, session.get(url, timeout=timeout) as r:
+            async with sem, session.get(url, timeout=timeout, proxy=proxy) as r:
 
                 #dictating the output encoding helps tremendusly with preformance
                 text = await r.text(encoding='utf-8')
@@ -51,7 +48,7 @@ async def get_page(url, hits, session, sem):
                 return err_msg
 
             #pause for a sec to not hammer server
-            #await asyncio.sleep(2)
+            await asyncio.sleep(1)
 
         except Exception as e:
             timestamp = datetime.now()
@@ -134,14 +131,19 @@ def proccess_links(innie,outie,header):
     f.close()
     print(i+1)
 
+    #start timer
+    start_time = time.time()
+
     # windows bug workaround 'https://stackoverflow.com/a/66772242'
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
     # this sets up and takes down the working loop and stuff.  also handles closing "sessions" cause that is complicated apparently
     asyncio.run(main(innie,outie,header))
 
+    # end the timer and print the time
+    print("\n\n\n")
+    print("--- %s seconds ---" % (time.time() - start_time))
 
-# end the timer and print the time
-#print("\n\n\n")
-#print("--- %s seconds ---" % (time.time() - start_time))
+
+
 
