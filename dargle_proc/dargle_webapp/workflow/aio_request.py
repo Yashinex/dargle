@@ -5,6 +5,7 @@ import time
 
 from bs4 import BeautifulSoup
 from datetime import datetime
+from aiohttp_socks import ProxyConnector
 
 
 # the reading head
@@ -17,10 +18,6 @@ async def get_page(url, hits, session, sem):
     # clean up any whitespace or newlines
     url = url.rstrip('\n')
     
-    #proxy setup
-    #TODO: setup proxy 'session.get(url, proxy=proxy)'
-    proxy = "socks5h://localhost:9050"
-
     max_retries = 1
     timeout = 4
 
@@ -28,7 +25,7 @@ async def get_page(url, hits, session, sem):
         if attempt != 0:
             timeout = pow(timeout, 2)
         try:
-            async with sem, session.get(url, timeout=timeout, proxy=proxy) as r:
+            async with sem, session.get(url, timeout=timeout) as r:
 
                 #dictating the output encoding helps tremendusly with preformance
                 text = await r.text(encoding='utf-8')
@@ -94,8 +91,12 @@ async def main(innie,outie,header):
     headers = {
         "user-agent" : "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0"
     }
+
+    #proxy
+    proxy = "socks5h://localhost:9050"
+    connector = ProxyConnector.from_url(proxy)
     #set up the session
-    async with aiohttp.ClientSession(timeout=timeout, headers=headers) as session:
+    async with aiohttp.ClientSession(timeout=timeout, headers=headers, connector=connector) as session:
         # this is the complicated part.  makes a buncha "sessions" named tasks and then collects them at the end.
         # this triggers the reading head method at the top
         tasks = [
