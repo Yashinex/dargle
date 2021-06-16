@@ -18,14 +18,9 @@ async def get_page(url, hits, session, sem):
     # clean up any whitespace or newlines
     url = url.rstrip('\n')
     
-<<<<<<< HEAD
     max_retries = 2
     timeout = 4
     output_format = "{u},{s},{h},{t},{m}"
-=======
-    max_retries = 1
-    timeout = 15
->>>>>>> b3fdf3f2549e2c3c36d2362bfe8a84e090a14e03
 
     for attempt in range(max_retries):
         if attempt != 0:
@@ -34,7 +29,7 @@ async def get_page(url, hits, session, sem):
             async with sem, session.get(url, timeout=timeout) as r:
 
                 #dictating the output encoding helps tremendusly with preformance
-                text = await r.text() # encoding='utf-8')
+                text = await r.text(encoding='utf-8')
 
                 title = await parse_for_title(text)
                 timestamp = datetime.now()
@@ -60,10 +55,10 @@ async def get_page(url, hits, session, sem):
             return err_msg
 
         except Exception as e:
-            #timestamp = datetime.now()
-            #err_msg = ("{u},{s},{h},{t},{m}").format(u=url, s=str(e), h=hits,t=timestamp.strftime("%m/%d/%Y %H:%M:%S"), m="N/A")
+            timestamp = datetime.now()
+            err_msg = ("{u},{s},{h},{t},{m}").format(u=url, s=str(e), h=hits,t=timestamp.strftime("%m/%d/%Y %H:%M:%S"), m="N/A")
             #TODO: remove this debug line
-            err_msg = (url + " " + str(e))
+            #err_msg = (url + " " + str(e))
             print(err_msg)
             return err_msg
 
