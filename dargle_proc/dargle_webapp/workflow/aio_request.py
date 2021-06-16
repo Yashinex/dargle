@@ -34,7 +34,7 @@ async def get_page(url, hits, session, sem):
                 timestamp = datetime.now()
                 msg = ("{u},{s},{h},{t},{m}").format(u=url, s=str(r.status), h=hits,t=timestamp.strftime("%m/%d/%Y %H:%M:%S"), m=str(title)[2:-1])
 
-                return msg
+                return await msg
         except asyncio.TimeoutError as e:
             print("++++++++++++++++++++++ timeout wait: " + str(timeout) + "   " + url)
             
@@ -42,7 +42,7 @@ async def get_page(url, hits, session, sem):
             if attempt == max_retries:
                 timestamp = datetime.now()
                 err_msg = ("{u},{s},{h},{t},{m}").format(u=url, s="timeout", h=hits,t=timestamp.strftime("%m/%d/%Y %H:%M:%S"), m="N/A")
-                return err_msg
+                return await err_msg
 
             #pause for a sec to not hammer server
             await asyncio.sleep(1)
@@ -52,7 +52,7 @@ async def get_page(url, hits, session, sem):
             err_msg = ("{u},{s},{h},{t},{m}").format(u=url, s=str(e), h=hits,t=timestamp.strftime("%m/%d/%Y %H:%M:%S"), m="N/A")
             #TODO: remove this debug line
             print(err_msg)
-            return err_msg
+            return await err_msg
 
 
 # this is a home made async method
