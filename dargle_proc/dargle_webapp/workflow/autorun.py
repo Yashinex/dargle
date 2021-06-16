@@ -9,11 +9,11 @@ check = sys.argv[5]
 
 request.line_count(innie)
 
-if check == True:
-    csv = request.process_links(innie,outie,header)
+if check == 'true':
+    #csv = request.process_links(innie,outie,header)
 
     # uncomment for async version of requests
-    #csv = aio_request.proccess_links(innie,outie,header)
+    csv = aio_request.proccess_links(innie,outie,header)
 
     
 # For troubleshooting/skipping requests
