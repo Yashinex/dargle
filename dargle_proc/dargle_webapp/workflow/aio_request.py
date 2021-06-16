@@ -19,12 +19,12 @@ async def get_page(url, hits, session, sem):
     url = url.rstrip('\n')
     
     max_retries = 2
-    timeout = 4
+    timeout = 12
     output_format = "{u},{s},{h},{t},{m}"
 
     for attempt in range(max_retries):
         if attempt != 0:
-            timeout = timeout
+            timeout = 60
         try:
             async with sem, session.get(url, timeout=timeout) as r:
 
