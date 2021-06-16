@@ -20,6 +20,7 @@ async def get_page(url, hits, session, sem):
     
     max_retries = 2
     timeout = 4
+    output_format = "{u},{s},{h},{t},{m}"
 
     for attempt in range(max_retries):
         if attempt != 0:
@@ -32,7 +33,7 @@ async def get_page(url, hits, session, sem):
 
                 title = await parce_for_title(text)
                 timestamp = datetime.now()
-                msg = ("{u},{s},{h},{t},{m}").format(u=url, s=str(r.status), h=hits,t=timestamp.strftime("%m/%d/%Y %H:%M:%S"), m=str(title)[2:-1])
+                msg = (output_format).format(u=url, s=str(r.status), h=hits,t=timestamp.strftime("%m/%d/%Y %H:%M:%S"), m=str(title)[2:-1])
 
                 return msg
         except asyncio.TimeoutError as e:
@@ -41,11 +42,17 @@ async def get_page(url, hits, session, sem):
             # after the last retry, print error message
             if attempt == max_retries:
                 timestamp = datetime.now()
-                err_msg = ("{u},{s},{h},{t},{m}").format(u=url, s="timeout", h=hits,t=timestamp.strftime("%m/%d/%Y %H:%M:%S"), m="N/A")
+                err_msg = (output_format).format(u=url, s="timeout", h=hits,t=timestamp.strftime("%m/%d/%Y %H:%M:%S"), m="N/A")
                 return err_msg
 
             #pause for a sec to not hammer server
             await asyncio.sleep(1)
+
+        except UnicodeDecodeError as e:
+            #manages errors caused by trying to decode media and stuff like that.
+            timestamp = datetime.now()
+            err_msg = (output_format).format(u=url, s="undecodable with utf-8", h=hits,t=timestamp.strftime("%m/%d/%Y %H:%M:%S"), m="N/A")
+            return err_msg
 
         except Exception as e:
             #timestamp = datetime.now()
