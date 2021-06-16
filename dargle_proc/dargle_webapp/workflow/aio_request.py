@@ -18,20 +18,25 @@ async def get_page(url, hits, session, sem):
     # clean up any whitespace or newlines
     url = url.rstrip('\n')
     
+<<<<<<< HEAD
     max_retries = 2
     timeout = 4
     output_format = "{u},{s},{h},{t},{m}"
+=======
+    max_retries = 1
+    timeout = 15
+>>>>>>> b3fdf3f2549e2c3c36d2362bfe8a84e090a14e03
 
     for attempt in range(max_retries):
         if attempt != 0:
-            timeout = pow(timeout, 2)
+            timeout = timeout
         try:
             async with sem, session.get(url, timeout=timeout) as r:
 
                 #dictating the output encoding helps tremendusly with preformance
-                text = await r.text(encoding='utf-8')
+                text = await r.text() # encoding='utf-8')
 
-                title = await parce_for_title(text)
+                title = await parse_for_title(text)
                 timestamp = datetime.now()
                 msg = (output_format).format(u=url, s=str(r.status), h=hits,t=timestamp.strftime("%m/%d/%Y %H:%M:%S"), m=str(title)[2:-1])
 
@@ -65,7 +70,7 @@ async def get_page(url, hits, session, sem):
 
 # this is a home made async method
 # it parses the text of the request as html and returns the title in utf-8
-async def parce_for_title(text):
+async def parse_for_title(text):
     try:
         # parse the html.  skip encoding detection as it is known utf-8
         soup = BeautifulSoup(text, "lxml")
@@ -97,16 +102,16 @@ async def main(innie,outie,header):
         next(in_reader,None)
 
     # max number of sessions open
-    sem = asyncio.Semaphore(200)
+    sem = asyncio.Semaphore(1000)
     # connection timeout
-    timeout = aiohttp.ClientTimeout(total=15)
+    timeout = aiohttp.ClientTimeout(total=120)
     #http headers
     headers = {
         "user-agent" : "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0"
     }
 
     #proxy
-    proxy = "socks5h://localhost:9050"
+    proxy = "socks5://localhost:9050"
     connector = ProxyConnector.from_url(proxy)
     #set up the session
     async with aiohttp.ClientSession(timeout=timeout, headers=headers, connector=connector) as session:
@@ -127,6 +132,7 @@ async def main(innie,outie,header):
         try:
             with open(outie, 'a') as f:
                 for line in results:
+                    print(line)
                     f.write(str(line))
                     f.write("\n")
         except Exception as e:
