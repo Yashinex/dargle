@@ -34,7 +34,7 @@ async def get_page(url, hits, session, sem):
                 timestamp = datetime.now()
                 msg = ("{u},{s},{h},{t},{m}").format(u=url, s=str(r.status), h=hits,t=timestamp.strftime("%m/%d/%Y %H:%M:%S"), m=str(title)[2:-1])
 
-                return await msg
+                return msg
         except asyncio.TimeoutError as e:
             print("++++++++++++++++++++++ timeout wait: " + str(timeout) + "   " + url)
             
@@ -42,17 +42,18 @@ async def get_page(url, hits, session, sem):
             if attempt == max_retries:
                 timestamp = datetime.now()
                 err_msg = ("{u},{s},{h},{t},{m}").format(u=url, s="timeout", h=hits,t=timestamp.strftime("%m/%d/%Y %H:%M:%S"), m="N/A")
-                return await err_msg
+                return err_msg
 
             #pause for a sec to not hammer server
             await asyncio.sleep(1)
 
         except Exception as e:
-            timestamp = datetime.now()
-            err_msg = ("{u},{s},{h},{t},{m}").format(u=url, s=str(e), h=hits,t=timestamp.strftime("%m/%d/%Y %H:%M:%S"), m="N/A")
+            #timestamp = datetime.now()
+            #err_msg = ("{u},{s},{h},{t},{m}").format(u=url, s=str(e), h=hits,t=timestamp.strftime("%m/%d/%Y %H:%M:%S"), m="N/A")
             #TODO: remove this debug line
+            err_msg = (url + " " + str(e))
             print(err_msg)
-            return await err_msg
+            return err_msg
 
 
 # this is a home made async method
@@ -141,8 +142,8 @@ def proccess_links(innie,outie,header):
     start_time = time.time()
 
     # windows bug workaround 'https://stackoverflow.com/a/66772242'
+    
     #asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
-
     # this sets up and takes down the working loop and stuff.  also handles closing "sessions" cause that is complicated apparently
     asyncio.run(main(innie,outie,header))
 
