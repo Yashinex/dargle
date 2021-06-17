@@ -91,6 +91,8 @@ async def get_page(url, hits, session, sem):
 
 
 
+
+
 # it parses the text of the request as html and returns the title in utf-8
 async def parse_for_title(text):
     try:
@@ -112,6 +114,8 @@ async def parse_for_title(text):
         print(err_msg)
 
         return err_msg
+
+
 
 
 
@@ -141,7 +145,10 @@ def write_out(results, outie):
     print("average request time: " + str(avg_time / len(results)))
 
 
-# the main working fucntion
+
+
+
+# the main working async function 
 async def main(innie,outie,header):
 
     # setup the csv file to be read from
@@ -179,7 +186,10 @@ async def main(innie,outie,header):
 
 
 
-# this is triggered by external proccess and kicks off the main async def
+
+
+
+# this is triggered by external proccess and kicks off the main async def up there ^^^^^^
 def proccess_links(innie,outie,header):
 
     # count the lines in the file
