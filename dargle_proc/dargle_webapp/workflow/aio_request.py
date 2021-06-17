@@ -2,6 +2,7 @@ import aiohttp
 import asyncio
 import csv
 import time
+import sys
 
 from bs4 import BeautifulSoup
 from datetime import datetime
@@ -40,22 +41,22 @@ async def get_page(url, hits, session, sem):
             # the actual request
             async with sem, session.get(url, timeout=timeout) as r:
 
-                #dictating the output encoding helps tremendusly with preformance
+                # dictating the output encoding helps tremendusly with preformance
                 text = await r.text(encoding='utf-8')
 
-                #load everything you want into dict
+                # load everything you want into dict
                 ret['request_time'] = (time.time() - start_req)
                 ret['title'] = (await parse_for_title(text))[2: -1]
                 ret['status'] = r.status
 
                 return ret
 
-
         # start of exceptions
 
         except asyncio.TimeoutError as e:
             # this is just for visual help with retries
-            print("++++++++++++++++++++++ timeout wait: " + str(timeout) + "   " + url)
+            print("++++++++++++++++++++++ timeout wait: " +
+                  str(timeout) + "   " + url)
 
             # when max retries reached
             if attempt == max_retries:
@@ -70,7 +71,7 @@ async def get_page(url, hits, session, sem):
             # pause before trying again
             await asyncio.sleep(1)
 
-        # handles proxy errors, namely falure to resolve names  
+        # handles proxy errors, namely falure to resolve names
         except python_socks.ProxyError as e:
             if len(str(e)) == 0:
                 ret['error'] = "proxy error"
@@ -99,9 +100,6 @@ async def get_page(url, hits, session, sem):
             return ret
 
 
-
-
-
 # it parses the text of the request as html and returns the title in utf-8
 async def parse_for_title(text):
     try:
@@ -125,9 +123,6 @@ async def parse_for_title(text):
         return err_msg
 
 
-
-
-
 def write_out(results, outie):
     # write the results to file
     avg_time = 0
@@ -135,15 +130,18 @@ def write_out(results, outie):
 
     try:
         writer = csv.writer(open(outie, 'w+'), newline='', encoding='utf-8')
+
         for ret in results:
             if ret is not None and ret != 'None':
                 avg_time += ret['request_time']
 
                 if 'error' in ret:
                     errors += 1
-                    writer.writerow([ret['url'],ret['error'],ret['hits'],ret['timestamp'],"N/A"])
+                    writer.writerow([ret['url'], ret['error'],
+                                    ret['hits'], ret['timestamp'], "N/A"])
                 else:
-                    writer.writerow([ret['url'],ret['status'],ret['hits'],ret['timestamp'],ret['title']])
+                    writer.writerow(
+                        [ret['url'], ret['status'], ret['hits'], ret['timestamp'], ret['title']])
             else:
                 writer.writerow(["NONE  was the returned value for this task"])
     except Exception as e:
@@ -154,32 +152,28 @@ def write_out(results, outie):
     print("average request time: " + str(avg_time / len(results)))
 
 
-
-
-
-# the main working async function 
-async def main(innie,outie,header):
+# the main working async function
+async def main(innie, outie, header):
 
     # setup the csv file to be read from
     infile = open(innie, 'r')
     in_reader = csv.reader(infile, delimiter=',')
     if header == 'true':
-        next(in_reader,None)
+        next(in_reader, None)
 
     # max number of sessions open
     sem = asyncio.Semaphore(400)
 
-    #http headers
+    # http headers
     headers = {
-        "user-agent" : "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0"
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0"
     }
 
-    #proxy
+    # proxy
     proxy = "socks5://localhost:9050"
     connector = ProxyConnector.from_url(proxy)
 
-
-    #set up the session
+    # set up the session
     async with aiohttp.ClientSession(headers=headers, connector=connector) as session:
         # this is the complicated part.  makes a buncha "sessions" named tasks and then collects them at the end.
         tasks = []
@@ -190,16 +184,12 @@ async def main(innie,outie,header):
         # gather up the "sessions" and wait for them to all end
         results = await asyncio.gather(*tasks)
 
-        #write the results to file
+        # write the results to file
         write_out(results, outie)
 
 
-
-
-
-
 # this is triggered by external proccess and kicks off the main async def up there ^^^^^^
-def proccess_links(innie,outie,header):
+def proccess_links(innie, outie, header):
 
     # count the lines in the file
     with open(innie) as f:
@@ -208,19 +198,16 @@ def proccess_links(innie,outie,header):
     f.close()
     print("Number of sites loade: " + str(i+1))
 
-    #start timer
+    # start timer
     start_time = time.time()
 
     # windows bug workaround 'https://stackoverflow.com/a/66772242'
-    #asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+    if sys.version_info[0] == 3 and sys.version_info[1] >= 8 and sys.platform.startswith('win'):
+        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
     # this sets up and takes down the working loop and stuff.  also handles closing "sessions" cause that is complicated apparently
-    asyncio.run(main(innie,outie,header))
+    asyncio.run(main(innie, outie, header))
 
     # end the timer and print the time
     print("\n\n\n")
     print("--- %s seconds ---" % (time.time() - start_time))
-
-
-
-
