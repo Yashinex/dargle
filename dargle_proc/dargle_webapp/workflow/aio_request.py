@@ -4,6 +4,8 @@ import csv
 import time
 import sys
 
+import traceback
+
 from bs4 import BeautifulSoup
 from datetime import datetime
 from aiohttp_socks import ProxyConnector
@@ -52,7 +54,6 @@ async def get_page(url, hits, session, sem):
                 return ret
 
         # start of exceptions
-
         except asyncio.TimeoutError as e:
             # this is just for visual help with retries
             print("++++++++++++++++++++++ timeout wait: " +
@@ -127,13 +128,16 @@ def write_out(results, outie):
     # write the results to file
     avg_time = 0
     errors = 0
+    redirects = 0 
+    timeouts = 0
+    dns_fail = 0
 
     try:
         writer = csv.writer(open(outie, 'w+'), newline='', encoding='utf-8')
 
         for ret in results:
             if ret is not None and ret != 'None':
-                avg_time += ret['request_time']
+                
 
                 if 'error' in ret:
                     errors += 1
@@ -142,14 +146,27 @@ def write_out(results, outie):
                 else:
                     writer.writerow(
                         [ret['url'], ret['status'], ret['hits'], ret['timestamp'], ret['title']])
+                    avg_time += ret['request_time']
+
+                if ret['error'] == 'timeout':
+                    timeouts += 1
+                
+                if 'proxy error' in ret['error']:
+                    dns_fail += 1
             else:
                 writer.writerow(["NONE  was the returned value for this task"])
+                errors += 1
+
     except Exception as e:
+        print(traceback.print_exc())
         print("Error in writing outfile: " + str(e))
 
     print("======= stats ========")
     print("errors: " + str(errors))
-    print("average request time: " + str(avg_time / len(results)))
+    print("average request time: " + str(avg_time / (len(results) - errors)))
+    print("redirects: " + str(redirects))
+    print("timeouts: " + str(timeouts))
+    print("dns falure: " + str(dns_fail))
 
 
 # the main working async function
@@ -209,5 +226,5 @@ def proccess_links(innie, outie, header):
     asyncio.run(main(innie, outie, header))
 
     # end the timer and print the time
-    print("\n\n\n")
-    print("--- %s seconds ---" % (time.time() - start_time))
+    print("\n")
+    print("runtime ----- %s seconds ---" % (time.time() - start_time))
