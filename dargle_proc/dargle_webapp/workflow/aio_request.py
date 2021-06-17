@@ -17,50 +17,70 @@ async def get_page(url, hits, session, sem):
     
     # clean up any whitespace or newlines
     url = url.rstrip('\n')
-    
+
+    # response dictonary
+    ret = {}
+    ret['url'] = url
+    ret['timestamp'] = datetime.now()
+    ret['hits'] = hits
+
+    # setup retry variables
     max_retries = 2
     timeout = 12
-    output_format = "{u},{s},{h},{t},{m}"
 
+    # main request retry loop
     for attempt in range(max_retries):
+
+        # change the timeout on retries
         if attempt != 0:
             timeout = 60
         try:
+            start_req = time.time()
             async with sem, session.get(url, timeout=timeout) as r:
 
                 #dictating the output encoding helps tremendusly with preformance
                 text = await r.text(encoding='utf-8')
 
-                title = await parse_for_title(text)
-                timestamp = datetime.now()
-                msg = (output_format).format(u=url, s=str(r.status), h=hits,t=timestamp.strftime("%m/%d/%Y %H:%M:%S"), m=str(title)[2:-1])
+                ret['request_time'] = (time.time() - start_req)
+                ret['title'] = (await parse_for_title(text))[2: -1]
+                ret['status'] = r.status
 
-                return msg
+                return ret
         except asyncio.TimeoutError as e:
             print("++++++++++++++++++++++ timeout wait: " + str(timeout) + "   " + url)
-            
-            # after the last retry, print error message
-            if attempt == max_retries:
-                timestamp = datetime.now()
-                err_msg = (output_format).format(u=url, s="timeout", h=hits,t=timestamp.strftime("%m/%d/%Y %H:%M:%S"), m="N/A")
-                return err_msg
 
-            #pause for a sec to not hammer server
+            # when max retries reached
+            if attempt == max_retries:
+                ret['request_time'] = (time.time() - start_req)
+                if len(str(e)) == 0:
+                    ret['error'] = "client timeout"
+                else:
+                    ret['error'] = str(e)
+
+                return ret
+
+            # pause before trying again
             await asyncio.sleep(1)
 
         except UnicodeDecodeError as e:
-            #manages errors caused by trying to decode media and stuff like that.
-            timestamp = datetime.now()
-            err_msg = (output_format).format(u=url, s="undecodable with utf-8", h=hits,t=timestamp.strftime("%m/%d/%Y %H:%M:%S"), m="N/A")
-            return err_msg
+
+            ret['request_time'] = (time.time() - start_req)
+            if len(str(e)) == 0:
+                ret['error'] = "can not decode with utf-8"
+            else:
+                ret['error'] = str(e)
+
+            return ret
 
         except Exception as e:
-            timestamp = datetime.now()
-            err_msg = ("{u},{s},{h},{t},{m}").format(u=url, s=str(e), h=hits,t=timestamp.strftime("%m/%d/%Y %H:%M:%S"), m="N/A")
-            #TODO: remove this debug line
-            #err_msg = (url + " " + str(e))
-            print(err_msg)
-            return err_msg
+
+            ret['request_time'] = (time.time() - start_req)
+            if len(str(e)) == 0:
+                ret['error'] = "A general exception ocurred in get_page()"
+            else:
+                ret['error'] = str(e)
+
+            return ret
 
 
 # this is a home made async method
@@ -121,11 +141,15 @@ async def main(innie,outie,header):
                 for row in in_reader
         ]
 
+        # I dont know why this works, but it does.  Removes the Nones that get returned.
+        # I assume that this is caused by the sessions being gathered before they returned.
+        await asyncio.sleep(3) 
+
         # gather up the "sessions" and wait for them to all end
         results = await asyncio.gather(*tasks)
 
         try:
-            with open(outie, 'a') as f:
+            with open(outie, 'w+') as f:
                 for line in results:
                     print(line)
                     f.write(str(line))
