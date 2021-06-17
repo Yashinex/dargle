@@ -26,7 +26,7 @@ async def get_page(url, hits, session, sem):
 
     # setup retry variables
     max_retries = 2
-    timeout = 12
+    timeout = 16
 
     # main request retry loop
     for attempt in range(max_retries):
@@ -141,6 +141,7 @@ async def main(innie,outie,header):
                 for row in in_reader
         ]
 
+
         # I dont know why this works, but it does.  Helps control the None that get returned.
         # I assume that this is caused by the sessions being gathered before they returned.
         await asyncio.sleep(3) 
@@ -152,10 +153,13 @@ async def main(innie,outie,header):
         try:
             writer = csv.writer(open(outie, 'w+'))
             for ret in results:
-                if 'error' in ret:
-                    writer.writerow([ret['url'],ret['error'],ret['hits'],ret['timestamp'],ret['title']])
+                if ret is not None:
+                    if 'error' in ret:
+                        writer.writerow([ret['url'],ret['error'],ret['hits'],ret['timestamp'],ret['title']])
+                    else:
+                        writer.writerow([ret['url'],ret['status'],ret['hits'],ret['timestamp'],ret['title']])
                 else:
-                    writer.writerow([ret['url'],ret['status'],ret['hits'],ret['timestamp'],ret['title']])
+                    writer.writerow(["NONE"])
         except Exception as e:
             print("Error in writing outfile: " + str(e))
 
