@@ -6,6 +6,7 @@ import time
 from bs4 import BeautifulSoup
 from datetime import datetime
 from aiohttp_socks import ProxyConnector
+import python_socks
 
 
 # the reading head
@@ -69,6 +70,14 @@ async def get_page(url, hits, session, sem):
             # pause before trying again
             await asyncio.sleep(1)
 
+        # handles proxy errors, namely falure to resolve names  
+        except python_socks.ProxyError as e:
+            if len(str(e)) == 0:
+                ret['error'] = "proxy error"
+            else:
+                ret['error'] = "proxy error " + str(e)
+            return ret
+
         except UnicodeDecodeError as e:
 
             ret['request_time'] = (time.time() - start_req)
@@ -125,9 +134,9 @@ def write_out(results, outie):
     errors = 0
 
     try:
-        writer = csv.writer(open(outie, 'w+'))
+        writer = csv.writer(open(outie, 'w+'), newline='', encoding='utf-8')
         for ret in results:
-            if ret is not None and ret == 'None':
+            if ret is not None and ret != 'None':
                 avg_time += ret['request_time']
 
                 if 'error' in ret:
