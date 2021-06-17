@@ -47,6 +47,7 @@ async def get_page(url, hits, session, sem):
 
                 return ret
         except asyncio.TimeoutError as e:
+            # this is just for visual help with retries
             print("++++++++++++++++++++++ timeout wait: " + str(timeout) + "   " + url)
 
             # when max retries reached
@@ -83,7 +84,7 @@ async def get_page(url, hits, session, sem):
             return ret
 
 
-# this is a home made async method
+
 # it parses the text of the request as html and returns the title in utf-8
 async def parse_for_title(text):
     try:
@@ -118,8 +119,7 @@ async def main(innie,outie,header):
 
     # max number of sessions open
     sem = asyncio.Semaphore(1000)
-    # connection timeout
-    timeout = aiohttp.ClientTimeout(total=120)
+
     #http headers
     headers = {
         "user-agent" : "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0"
@@ -129,7 +129,7 @@ async def main(innie,outie,header):
     proxy = "socks5://localhost:9050"
     connector = ProxyConnector.from_url(proxy)
     #set up the session
-    async with aiohttp.ClientSession(timeout=timeout, headers=headers, connector=connector) as session:
+    async with aiohttp.ClientSession(headers=headers, connector=connector) as session:
         # this is the complicated part.  makes a buncha "sessions" named tasks and then collects them at the end.
         # this triggers the reading head method at the top
         tasks = [
