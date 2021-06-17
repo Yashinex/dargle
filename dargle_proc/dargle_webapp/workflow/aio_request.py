@@ -51,6 +51,10 @@ async def get_page(url, hits, session, sem):
                 ret['title'] = (await parse_for_title(text))[2: -1]
                 ret['status'] = r.status
 
+                if r.history is not None:
+                    ret['redirects'] = r.history
+                
+                await asyncio.sleep(.250)
                 return ret
 
         # start of exceptions
