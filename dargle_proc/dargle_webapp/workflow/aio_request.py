@@ -117,18 +117,28 @@ async def parse_for_title(text):
 
 def write_out(results, outie):
     # write the results to file
+    avg_time = 0
+    errors = 0
+
     try:
         writer = csv.writer(open(outie, 'w+'))
         for ret in results:
-            if ret is not None:
+            if ret is not None and ret == 'None':
+                avg_time += ret['request_time']
+
                 if 'error' in ret:
+                    errors += 1
                     writer.writerow([ret['url'],ret['error'],ret['hits'],ret['timestamp'],"N/A"])
                 else:
                     writer.writerow([ret['url'],ret['status'],ret['hits'],ret['timestamp'],ret['title']])
             else:
-                writer.writerow(["NONE"])
+                writer.writerow(["NONE  was the returned value for this task"])
     except Exception as e:
         print("Error in writing outfile: " + str(e))
+
+    print("======= stats ========")
+    print("errors: " + str(errors))
+    print("average request time: " + str(avg_time / len(results)))
 
 
 # the main working fucntion
