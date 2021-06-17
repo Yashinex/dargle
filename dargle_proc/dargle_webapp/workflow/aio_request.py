@@ -46,6 +46,10 @@ async def get_page(url, hits, session, sem):
                 ret['status'] = r.status
 
                 return ret
+
+
+        # start of exceptions
+
         except asyncio.TimeoutError as e:
             # this is just for visual help with retries
             print("++++++++++++++++++++++ timeout wait: " + str(timeout) + "   " + url)
@@ -131,15 +135,11 @@ async def main(innie,outie,header):
     #set up the session
     async with aiohttp.ClientSession(headers=headers, connector=connector) as session:
         # this is the complicated part.  makes a buncha "sessions" named tasks and then collects them at the end.
-        # this triggers the reading head method at the top
-        tasks = [
-            # url, hits, session, sem, outfile
-            asyncio.create_task(
-                get_page(row[0], row[1], session, sem)
-                )
-                # the for loop is reading from the csv containing the urls.  the [0] is just where the url is in that format
-                for row in in_reader
-        ]
+        # this triggers the reading head method at the top.  row[0] = url, row[1] = hits
+        tasks = []
+        for row in in_reader:
+            task = asyncio.create_task(get_page(row[0], row[1], session, sem))
+            tasks.append(task)
 
 
         # I dont know why this works, but it does.  Helps control the None that get returned.
@@ -155,7 +155,7 @@ async def main(innie,outie,header):
             for ret in results:
                 if ret is not None:
                     if 'error' in ret:
-                        writer.writerow([ret['url'],ret['error'],ret['hits'],ret['timestamp'],ret['title']])
+                        writer.writerow([ret['url'],ret['error'],ret['hits'],ret['timestamp'],"N/A"])
                     else:
                         writer.writerow([ret['url'],ret['status'],ret['hits'],ret['timestamp'],ret['title']])
                 else:
