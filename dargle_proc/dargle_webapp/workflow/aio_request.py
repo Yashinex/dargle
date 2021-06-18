@@ -139,8 +139,7 @@ def write_out(results, outie):
 
             if ret is not None and ret != 'None':
                 if 'error' in ret:
-                    writer.writerow([ret['url'], ret['error'],
-                                    ret['hits'], ret['timestamp'], "N/A"])
+                    writer.writerow([ret['url'], ret['error'],ret['hits'], ret['timestamp'], "N/A"])
 
                     if ret['error'] == 'timeout':
                         timeouts += 1
@@ -155,7 +154,7 @@ def write_out(results, outie):
 
                     avg_time += ret['request_time']
             else:
-                writer.writerow(["NONE  was the returned value for this task", "n/a", "n/a", "n/a", "n/a"])
+                writer.writerow(["NONE  was the returned value for this task", "n/a", 0, "n/a", "n/a"])
                 errors += 1
 
     except Exception as e:
