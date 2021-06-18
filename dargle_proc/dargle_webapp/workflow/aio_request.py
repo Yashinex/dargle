@@ -54,7 +54,7 @@ async def get_page(url, hits, session, sem):
                 if r.history is not None:
                     ret['redirects'] = r.history
                 
-                await asyncio.sleep(.250)
+                
                 return ret
 
         # start of exceptions
@@ -150,7 +150,7 @@ def write_out(results, outie):
                     errors += 1
                 else:
                     writer.writerow(
-                        [ret['url'], ret['status'], ret['hits'], ret['timestamp'], ret['title'][2:-1]])
+                        [ret['url'], ret['status'], ret['hits'], ret['timestamp'], ret['title']])
 
                     avg_time += ret['request_time']
             else:
