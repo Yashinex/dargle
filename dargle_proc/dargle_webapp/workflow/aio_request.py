@@ -48,7 +48,7 @@ async def get_page(url, hits, session, sem):
 
                 # load everything you want into dict
                 ret['request_time'] = (time.time() - start_req)
-                ret['title'] = (await parse_for_title(text))[2: -1]
+                ret['title'] = (await parse_for_title(text))
                 ret['status'] = r.status
 
                 if r.history is not None:
@@ -133,13 +133,12 @@ def write_out(results, outie):
     dns_fail = 0
 
     try:
-        writer = csv.writer(open(outie, 'w+', newline='', encoding='utf-8'))
+        writer = csv.writer(open(outie, 'w+', newline=''))
 
         for ret in results:
-            if ret is not None and ret != 'None':
 
+            if ret is not None and ret != 'None':
                 if 'error' in ret:
-                    errors += 1
                     writer.writerow([ret['url'], ret['error'],
                                     ret['hits'], ret['timestamp'], "N/A"])
 
@@ -149,11 +148,12 @@ def write_out(results, outie):
                     if 'proxy error' in ret['error']:
                         dns_fail += 1
 
+                    errors += 1
                 else:
                     writer.writerow(
-                        [ret['url'], ret['status'], ret['hits'], ret['timestamp'], ret['title']])
-                    avg_time += ret['request_time']
+                        [ret['url'], ret['status'], ret['hits'], ret['timestamp'], ret['title'][2:-1]])
 
+                    avg_time += ret['request_time']
             else:
                 writer.writerow(["NONE  was the returned value for this task", "n/a", "n/a", "n/a", "n/a"])
                 errors += 1
@@ -214,7 +214,7 @@ def proccess_links(innie, outie, header):
         for i, l in enumerate(f):
             pass
     f.close()
-    print("Number of sites loade: " + str(i+1))
+    print("Number of sites loaded: " + str(i+1))
 
     # start timer
     start_time = time.time()
