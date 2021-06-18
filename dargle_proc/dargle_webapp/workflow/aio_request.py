@@ -36,7 +36,7 @@ async def get_page(url, hits, session, sem):
 
         # change the timeout on retries
         if attempt != 0:
-            timeout = 60
+            timeout = 20
         try:
             start_req = time.time()
 
