@@ -164,7 +164,7 @@ def write_out(results, outie):
 
     print("======= stats ========")
     print("errors: " + str(errors))
-    print("average request time: " + str(avg_time / (len(results) - errors + 1)))
+    print("average request time: " + str(avg_time / (len(results) - errors + 0.1)))
     print("redirects: " + str(redirects))
     print("timeouts: " + str(timeouts))
     print("dns falure: " + str(dns_fail))
