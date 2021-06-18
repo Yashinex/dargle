@@ -29,22 +29,22 @@ async def get_page(url, hits, session, sem):
 
     # setup retry variables
     max_retries = 2
-    timeout = 16
+    timeout = 5
 
     # main request retry loop
     for attempt in range(max_retries):
 
         # change the timeout on retries
         if attempt != 0:
-            timeout = 20
+            timeout = 2
         try:
             start_req = time.time()
 
             # the actual request
-            async with sem, session.get(url, timeout=timeout, allow_redirects=True, max_redirects=100) as r:
+            async with sem, session.get(url, timeout=timeout, allow_redirects=True) as r:
 
                 # dictating the output encoding helps tremendusly with preformance
-                text = await r.text(encoding='utf-8')
+                text = await r.content.read(-1)
 
                 # load everything you want into dict
                 ret['request_time'] = (time.time() - start_req)
@@ -56,13 +56,15 @@ async def get_page(url, hits, session, sem):
                 
                 await asyncio.sleep(10)
 
+                # Breakpoint
+                # print(ret)
+
                 return ret
 
         # start of exceptions
         except asyncio.TimeoutError as e:
             # this is just for visual help with retries
-            print("++++++++++++++++++++++ timeout wait: " +
-                  str(timeout) + "   " + url)
+            # print("++++++++++++++++++++++ timeout wait: " + str(timeout) + "   " + url)
 
             # when max retries reached
             if attempt == max_retries:
@@ -75,7 +77,7 @@ async def get_page(url, hits, session, sem):
                 return ret
 
             # pause before trying again
-            await asyncio.sleep(1)
+            # await asyncio.sleep(1)
 
         # handles proxy errors, namely falure to resolve names
         except python_socks.ProxyError as e:
@@ -87,7 +89,7 @@ async def get_page(url, hits, session, sem):
 
         except UnicodeDecodeError as e:
             if len(str(e)) == 0:
-                ret['error'] = "can not decode with utf-8"
+                ret['error'] = "Cannot decode with utf-8"
             else:
                 ret['error'] = str(e)
 
@@ -110,13 +112,15 @@ async def parse_for_title(text):
 
         # get the title
         title = soup.title
+        # title = None
 
-        # if there is a title, encoded it.  if not, return error msg
+        # if there is a title, encode it. Else, return error msg
         if title is not None:
             title = soup.title.string
         else:
             title = "b4 err: no title on this page"
 
+        print(title)
         return title
     except Exception as e:
         err_msg = "+++++++++ b4 err: " + str(e)
@@ -134,7 +138,9 @@ def write_out(results, outie):
     dns_fail = 0
 
     try:
-        writer = csv.writer(open(outie, 'w+', newline=''))
+        outfile = open(outie, 'w+', newline='')
+
+        writer = csv.writer(outfile)
 
         for ret in results:
 
@@ -150,13 +156,17 @@ def write_out(results, outie):
 
                     errors += 1
                 else:
-                    writer.writerow(
-                        [ret['url'], ret['status'], ret['hits'], ret['timestamp'], ret['title']])
+                    writer.writerow([ret['url'], ret['status'], ret['hits'], ret['timestamp'], ret['title']])
 
                     avg_time += ret['request_time']
             else:
-                writer.writerow(["NONE  was the returned value for this task", "n/a", 0, "n/a", "n/a"])
+                timestamp = datetime.now()
+                # Breakpoint
+                # print(ret)
+                writer.writerow(["Empty Value", "N/A", 0, timestamp.strftime("%m/%d/%Y %H:%M:%S"), "N/A"])
                 errors += 1
+
+        outfile.close()
 
     except Exception as e:
         print(traceback.print_exc())
@@ -199,12 +209,18 @@ async def main(innie, outie, header):
             task = asyncio.create_task(get_page(row[0], row[1], session, sem))
             tasks.append(task)
 
+            # print(task)
+
         # gather up the "sessions" and wait for them to all end
-        results = await asyncio.gather(*tasks)
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+        # Breakpoint
+        # print("Results:\n")
+        # print(results)
 
         # write the results to file
         write_out(results, outie)
 
+    infile.close()
 
 # this is triggered by external proccess and kicks off the main async def up there ^^^^^^
 def proccess_links(innie, outie, header):
@@ -223,9 +239,27 @@ def proccess_links(innie, outie, header):
     if sys.version_info[0] == 3 and sys.version_info[1] >= 8 and sys.platform.startswith('win'):
         asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
-    # this sets up and takes down the working loop and stuff.  also handles closing "sessions" cause that is complicated apparently
-    asyncio.run(main(innie, outie, header))
+    # Legacy
+    # asyncio.run(main(innie, outie, header))
+
+    loop = asyncio.get_event_loop()
+    loop.set_debug(enabled=False)
+    loop.run_until_complete(main(innie,outie,header))
+    loop.run_until_complete(asyncio.sleep(2))
+    loop.close()
 
     # end the timer and print the time
     print("\n")
     print("runtime ----- %s seconds ---" % (time.time() - start_time))
+
+    # Andra - you forgot to return the output file
+    # autorun was expecting a file to be output but the return was not defined.
+    # This resulted in an implicit NoneType object to be passed to the
+    # Object Relational Mapper.
+    return outie
+
+'''
+TODO LIST:
+
+- Figure out a way to pass addresses to EmptyValue fields in output .csv
+'''
