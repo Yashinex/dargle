@@ -41,7 +41,7 @@ async def get_page(url, hits, session, sem):
             start_req = time.time()
 
             # the actual request
-            async with sem, session.get(url, timeout=timeout) as r:
+            async with sem, session.get(url, timeout=timeout, allow_redirects=True, max_redirects=10) as r:
 
                 # dictating the output encoding helps tremendusly with preformance
                 text = await r.text(encoding='utf-8')
