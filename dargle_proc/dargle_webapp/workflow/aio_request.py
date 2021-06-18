@@ -85,8 +85,6 @@ async def get_page(url, hits, session, sem):
             return ret
 
         except UnicodeDecodeError as e:
-
-            ret['request_time'] = (time.time() - start_req)
             if len(str(e)) == 0:
                 ret['error'] = "can not decode with utf-8"
             else:
@@ -95,8 +93,6 @@ async def get_page(url, hits, session, sem):
             return ret
 
         except Exception as e:
-
-            ret['request_time'] = (time.time() - start_req)
             if len(str(e)) == 0:
                 ret['error'] = "A general exception ocurred in get_page()"
             else:
@@ -147,16 +143,18 @@ def write_out(results, outie):
                     errors += 1
                     writer.writerow([ret['url'], ret['error'],
                                     ret['hits'], ret['timestamp'], "N/A"])
+
+                    if ret['error'] == 'timeout':
+                        timeouts += 1
+
+                    if 'proxy error' in ret['error']:
+                        dns_fail += 1
+
                 else:
                     writer.writerow(
                         [ret['url'], ret['status'], ret['hits'], ret['timestamp'], ret['title']])
                     avg_time += ret['request_time']
 
-                if ret['error'] == 'timeout':
-                    timeouts += 1
-                
-                if 'proxy error' in ret['error']:
-                    dns_fail += 1
             else:
                 writer.writerow(["NONE  was the returned value for this task"])
                 errors += 1
