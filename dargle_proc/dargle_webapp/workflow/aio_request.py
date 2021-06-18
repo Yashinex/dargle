@@ -137,7 +137,6 @@ def write_out(results, outie):
 
         for ret in results:
             if ret is not None and ret != 'None':
-                
 
                 if 'error' in ret:
                     errors += 1
@@ -156,7 +155,7 @@ def write_out(results, outie):
                     avg_time += ret['request_time']
 
             else:
-                writer.writerow(["NONE  was the returned value for this task"])
+                writer.writerow(["NONE  was the returned value for this task", "n/a", "n/a", "n/a", "n/a"])
                 errors += 1
 
     except Exception as e:
@@ -165,7 +164,7 @@ def write_out(results, outie):
 
     print("======= stats ========")
     print("errors: " + str(errors))
-    print("average request time: " + str(avg_time / (len(results) - errors)))
+    print("average request time: " + str(avg_time / (len(results) - errors + 1)))
     print("redirects: " + str(redirects))
     print("timeouts: " + str(timeouts))
     print("dns falure: " + str(dns_fail))
