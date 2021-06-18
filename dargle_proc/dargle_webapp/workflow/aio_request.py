@@ -25,7 +25,7 @@ async def get_page(url, hits, session, sem):
     ret = {}
     ret['url'] = url
     ret['timestamp'] = (datetime.now()).strftime("%m/%d/%Y %H:%M:%S")
-    ret['hits'] = hits
+    ret['hits'] = int(hits)
 
     # setup retry variables
     max_retries = 2
