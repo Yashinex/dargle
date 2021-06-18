@@ -113,7 +113,7 @@ async def parse_for_title(text):
 
         # if there is a title, encoded it.  if not, return error msg
         if title is not None:
-            title = soup.title.string.encode('utf-8')
+            title = soup.title.string
         else:
             title = "b4 err: no title on this page"
 
