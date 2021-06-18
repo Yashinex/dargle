@@ -137,7 +137,7 @@ def write_out(results, outie):
     dns_fail = 0
 
     try:
-        writer = csv.writer(open(outie, 'w+'), newline='', encoding='utf-8')
+        writer = csv.writer(open(outie, 'w+', newline='', encoding='utf-8'))
 
         for ret in results:
             if ret is not None and ret != 'None':
