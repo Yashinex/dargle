@@ -3,7 +3,6 @@ import asyncio
 import csv
 import time
 
-
 from bs4 import BeautifulSoup
 from datetime import datetime
 from aiohttp_socks import ProxyConnector as pc
@@ -15,16 +14,20 @@ async def runner(url, hits, session):
 	response['url'] = url.strip()
 	response['hits'] = hits
 
-	# get the page
-	async with session.get(url, timeout=20) as r:
-		text = await r.content.read(-1)
-		status = r.status
+	try:
+		# get the page
+		async with session.get(url, timeout=20) as r:
+			text = await r.content.read(-1)
+			status = r.status
 
-	# parse title
-	soup = BeautifulSoup(text, 'lxml')
-	response['title'] = soup.title.string
+		# parse title
+		soup = BeautifulSoup(text, 'lxml')
+		response['title'] = soup.title.string
 
-	response['status'] = status
+		response['status'] = status
+
+	except Exception as e:
+		print("runner exception: " + str(e))
 
 	response['timestamp'] = (datetime.now()).strftime("%m/%d/%Y %H:%M:%S")
 
