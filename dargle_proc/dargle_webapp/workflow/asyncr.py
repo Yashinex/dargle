@@ -8,7 +8,7 @@ from bs4 import BeautifulSoup
 from datetime import datetime
 from aiohttp_socks import ProxyConnector as pc
 
-
+# gets the pages
 async def runner(url, hits, session):
 	# set up dict to contain page info
 	response = {}
@@ -28,6 +28,7 @@ async def runner(url, hits, session):
 
 	response['timestamp'] = (datetime.now()).strftime("%m/%d/%Y %H:%M:%S")
 
+	# returns dict
 	return response
 
 
