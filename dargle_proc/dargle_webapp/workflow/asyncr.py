@@ -28,6 +28,8 @@ async def runner(url, hits, session):
 
 	except Exception as e:
 		print("runner exception: " + str(e))
+		response['title'] = "N/A"
+		response['status'] = 000
 
 	response['timestamp'] = (datetime.now()).strftime("%m/%d/%Y %H:%M:%S")
 
