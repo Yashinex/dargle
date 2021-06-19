@@ -37,7 +37,7 @@ async def runner(url, hits, session):
 	return response
 
 
-async def main(innie,outie,header):
+async def initiate(innie,outie,header):
 	infile = open(innie, 'r')
 	outfile = open(outie, 'w+')
 
@@ -71,7 +71,7 @@ async def main(innie,outie,header):
 			out_writer.writerow([result['url'], result['status'], result['hits'], results['timestamps'], results['title']])
 
 
-# this method triggers main
+# this method triggers initiate
 def proccess_links(innie,outie,header):
 	# timer for testing
 	start_time = time.time()
@@ -79,7 +79,7 @@ def proccess_links(innie,outie,header):
 	# patches selector loop selection bug
 	asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 	# start the async with debug enabled
-	asyncio.run(main(innie,outie,header), debug=True)
+	asyncio.run(initiate(innie,outie,header), debug=True)
 
 	# end the timer
 	print("--- %s seconds ---" % (time.time() - start_time))
