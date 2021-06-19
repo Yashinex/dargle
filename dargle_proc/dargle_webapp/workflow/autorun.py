@@ -19,4 +19,5 @@ if check == 'true':
 else:
     csv = outie
 
-dargle_orm.dbUpdate(csv,domain)
+# Turn back on to ensure mapping to DB
+# dargle_orm.dbUpdate(csv,domain)

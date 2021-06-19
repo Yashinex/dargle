@@ -29,19 +29,19 @@ async def get_page(url, hits, session, sem):
 
     # setup retry variables
     max_retries = 2
-    timeout = 5
+    timeout = 20
 
     # main request retry loop
     for attempt in range(max_retries):
 
         # change the timeout on retries
         if attempt != 0:
-            timeout = 2
+            timeout = 1
         try:
             start_req = time.time()
 
             # the actual request
-            async with sem, session.get(url, timeout=timeout, allow_redirects=True) as r:
+            async with sem, session.get(url, timeout=timeout, allow_redirects=True, max_redirects=1000) as r:
 
                 # dictating the output encoding helps tremendusly with preformance
                 text = await r.content.read(-1)
@@ -54,17 +54,17 @@ async def get_page(url, hits, session, sem):
                 if r.history is not None:
                     ret['redirects'] = r.history
                 
-                await asyncio.sleep(10)
+                await asyncio.sleep(20)
 
                 # Breakpoint
-                # print(ret)
+                print("++++++++++++++++++++++ title grabbed: " + str(req['title']))
 
                 return ret
 
         # start of exceptions
         except asyncio.TimeoutError as e:
             # this is just for visual help with retries
-            # print("++++++++++++++++++++++ timeout wait: " + str(timeout) + "   " + url)
+            print("++++++++++++++++++++++ timeout wait: " + str(timeout) + "   " + url)
 
             # when max retries reached
             if attempt == max_retries:
@@ -77,29 +77,11 @@ async def get_page(url, hits, session, sem):
                 return ret
 
             # pause before trying again
-            # await asyncio.sleep(1)
-
-        # handles proxy errors, namely falure to resolve names
-        except python_socks.ProxyError as e:
-            if len(str(e)) == 0:
-                ret['error'] = "proxy error"
-            else:
-                ret['error'] = "proxy error " + str(e)
-            return ret
-
-        except UnicodeDecodeError as e:
-            if len(str(e)) == 0:
-                ret['error'] = "Cannot decode with utf-8"
-            else:
-                ret['error'] = str(e)
-
-            return ret
+            await asyncio.sleep(1)
 
         except Exception as e:
-            if len(str(e)) == 0:
-                ret['error'] = "A general exception ocurred in get_page()"
-            else:
-                ret['error'] = str(e)
+            print("Error occurred: " + str(e))
+            ret['error'] = str(e)
 
             return ret
 
@@ -120,7 +102,8 @@ async def parse_for_title(text):
         else:
             title = "b4 err: no title on this page"
 
-        print(title)
+        # Breakpoint
+        # print(title)
         return title
     except Exception as e:
         err_msg = "+++++++++ b4 err: " + str(e)
@@ -136,6 +119,7 @@ def write_out(results, outie):
     redirects = 0 
     timeouts = 0
     dns_fail = 0
+    successes = 0
 
     try:
         outfile = open(outie, 'w+', newline='')
@@ -159,6 +143,7 @@ def write_out(results, outie):
                     writer.writerow([ret['url'], ret['status'], ret['hits'], ret['timestamp'], ret['title']])
 
                     avg_time += ret['request_time']
+                    successes += 1
             else:
                 timestamp = datetime.now()
                 # Breakpoint
@@ -166,18 +151,20 @@ def write_out(results, outie):
                 writer.writerow(["Empty Value", "N/A", 0, timestamp.strftime("%m/%d/%Y %H:%M:%S"), "N/A"])
                 errors += 1
 
-        outfile.close()
+        # outfile.close()
 
     except Exception as e:
         print(traceback.print_exc())
         print("Error in writing outfile: " + str(e))
 
     print("======= stats ========")
+    print("successful connections: " + str(successes))
     print("errors: " + str(errors))
     print("average request time: " + str(avg_time / (len(results) - errors + 0.1)))
     print("redirects: " + str(redirects))
     print("timeouts: " + str(timeouts))
     print("dns falure: " + str(dns_fail))
+    # print(results)
 
 
 # the main working async function
@@ -190,11 +177,11 @@ async def main(innie, outie, header):
         next(in_reader, None)
 
     # max number of sessions open
-    sem = asyncio.Semaphore(400)
+    sem = asyncio.Semaphore(100)
 
     # http headers
     headers = {
-        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0"
+        "user-agent": "HotJava/1.1.2 FCS"
     }
 
     # proxy
@@ -212,7 +199,7 @@ async def main(innie, outie, header):
             # print(task)
 
         # gather up the "sessions" and wait for them to all end
-        results = await asyncio.gather(*tasks, return_exceptions=True)
+        results = await asyncio.gather(*tasks, return_exceptions=False)
         # Breakpoint
         # print("Results:\n")
         # print(results)
@@ -220,7 +207,7 @@ async def main(innie, outie, header):
         # write the results to file
         write_out(results, outie)
 
-    infile.close()
+    # infile.close()
 
 # this is triggered by external proccess and kicks off the main async def up there ^^^^^^
 def proccess_links(innie, outie, header):
