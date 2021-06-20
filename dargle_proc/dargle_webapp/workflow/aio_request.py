@@ -57,7 +57,7 @@ async def get_page(url, hits, session, sem):
                 await asyncio.sleep(20)
 
                 # Breakpoint
-                print("++++++++++++++++++++++ title grabbed: " + str(req['title']))
+                print("++++++++++++++++++++++ title grabbed: " + str(ret['title']))
 
                 return ret
 

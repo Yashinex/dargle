@@ -37,11 +37,7 @@ async def runner(url, hits, session):
 	return response
 
 
-<<<<<<< HEAD
-async def async_init(innie,outie,header):
-=======
 async def initiate(innie,outie,header):
->>>>>>> b99f31e65b2f81fa3493f31db8e7c3e54b20716e
 	infile = open(innie, 'r')
 	outfile = open(outie, 'w+')
 
