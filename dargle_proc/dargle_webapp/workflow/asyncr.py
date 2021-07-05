@@ -1,3 +1,4 @@
+import sys
 import aiohttp
 import asyncio
 import csv
@@ -81,9 +82,11 @@ def proccess_links(innie,outie,header):
 	# timer for testing
 	start_time = time.time()
 
-	# patches selector loop selection bug
-	asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
-	# start the async with debug enabled
+	# workaround for selector loop selection bug in windows
+	if sys.version_info[0] == 3 and sys.version_info[1] >= 8 and sys.platform.startswith('win'):
+		asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+
+	# start the async with debug enabled for extra dubug logs
 	asyncio.run(initiate(innie,outie,header), debug=True)
 
 	# end the timer
