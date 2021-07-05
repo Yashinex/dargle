@@ -2,6 +2,7 @@ import aiohttp
 import asyncio
 import csv
 import time
+import re
 
 from bs4 import BeautifulSoup
 from datetime import datetime
@@ -16,24 +17,28 @@ async def runner(url, hits, session):
 
 	try:
 		# get the page
-		async with session.get(url, timeout=20) as r:
+		async with session.get(url.strip(), timeout=20) as r:
 			text = await r.content.read(-1)
 			status = r.status
 
 		# parse title
 		soup = BeautifulSoup(text, 'lxml')
-		response['title'] = soup.title.string
 
-		response['status'] = status
+		if soup.title:
+			response['title'] = re.sub(r'\W+', ' ', soup.title.string)
+		else:
+			response['title'] = "no title"
+
+		response['status'] = str(status)
 
 	except Exception as e:
 		print("runner exception: " + str(e))
 		response['title'] = "N/A"
-		response['status'] = 000
+		response['status'] = '-1'
 
+	# set final time
 	response['timestamp'] = (datetime.now()).strftime("%m/%d/%Y %H:%M:%S")
-
-	# returns dict
+	# returns dict after trycatch
 	return response
 
 
