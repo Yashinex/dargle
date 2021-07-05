@@ -62,7 +62,7 @@ async def initiate(innie,outie,header):
 	connector = pc.from_url(proxy)
 	
 	# Spin off runners to get pages
-	async with aiohttp.ClientSession(connector=connector) as session:
+	async with aiohttp.ClientSession(connector=connector, headers=headers) as session:
 		tasks = []
 		for url in in_reader:
 			task = asyncio.create_task(runner(url[0], url[1], session))
