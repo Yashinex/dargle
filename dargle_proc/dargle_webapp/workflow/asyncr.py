@@ -15,6 +15,7 @@ async def runner(url, hits, session):
 	response = {}
 	response['url'] = url.strip()
 	response['hits'] = hits
+	response['timestamp'] = (datetime.now()).strftime("%m/%d/%Y %H:%M:%S")
 
 	try:
 		# get the page
@@ -37,8 +38,6 @@ async def runner(url, hits, session):
 		response['title'] = "N/A"
 		response['status'] = '-1'
 
-	# set final time
-	response['timestamp'] = (datetime.now()).strftime("%m/%d/%Y %H:%M:%S")
 	# returns dict after trycatch
 	return response
 
@@ -72,10 +71,12 @@ async def initiate(innie,outie,header):
 		# gather the runners when they return
 		results = await asyncio.gather(*tasks)
 
-		# put the results the outfile
+		# put the results the outfile. if it cant write, try encoding the title as utf-8.
 		for result in results:
-			out_writer.writerow([result['url'], result['status'], result['hits'], results['timestamps'], results['title']])
-
+			try:
+				out_writer.writerow([result['url'], result['status'], result['hits'], results['timestamps'], results['title']])
+			except Exception:
+				out_writer.writerow([result['url'], result['status'], result['hits'], results['timestamps'], (results['title']).encoding('utf-8')])
 
 # this method triggers initiate
 def proccess_links(innie,outie,header):
