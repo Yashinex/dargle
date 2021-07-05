@@ -9,6 +9,13 @@ from bs4 import BeautifulSoup
 from datetime import datetime
 from aiohttp_socks import ProxyConnector as pc
 
+'''
+	Goes through a list of provided urls in csv, gets the titles, and outputs them in another csv.
+
+	TODO:
+		Might need to move the csv writer out of the aiohttp session context in the main function.
+'''
+
 # gets the pages
 async def runner(url, hits, session):
 	# set up dict to contain page info
