@@ -24,30 +24,43 @@ async def runner(url, hits, session):
 	response['hits'] = hits
 	response['timestamp'] = (datetime.now()).strftime("%m/%d/%Y %H:%M:%S")
 
-	try:
-		# get the page
-		async with session.get(url.strip(), timeout=20) as r:
-			text = await r.content.read(-1)
-			status = r.status
+	timeout = 7
+	retries = 2
 
-		# parse title
-		soup = BeautifulSoup(text, 'lxml')
+	for attempt in range(retries):
+		try:
+			# get the page
+			async with session.get(url.strip(), timeout=timeout) as r:
+				text = await r.content.read(-1)
+				status = r.status
 
-		if soup.title:
-			response['title'] = re.sub(r'\W+', ' ', soup.title.string)
-		else:
-			response['title'] = "no title"
+			# parse title
+			soup = BeautifulSoup(text, 'lxml')
 
-		response['status'] = str(status)
+			if soup.title:
+				response['title'] = re.sub(r'\W+', ' ', soup.title.string)
+			else:
+				response['title'] = "no title"
 
-	except Exception as e:
-		print("runner exception: " + str(e))
-		response['title'] = "N/A"
-		response['status'] = '-1'
+			response['status'] = str(status)
 
-	finally:
-		# return response in every case.
-		return response
+		except Exception as e:
+
+			if isinstance(e, asyncio.TimeoutError) and attempt < retries -1:
+				timeout = timeout + 10
+
+			elif isinstance(e, asyncio.TimeoutError) and attempt == retries -1:
+				response['error'] = e.__class__.__name__
+				response['title'] = 'client timeout'
+				response['status'] = '-1'
+			else:
+				response['error'] = e.__class__.__name__
+				response['title'] = "N/A"
+				response['status'] = '-1'
+
+		finally:
+			# return response in every case.
+			return response
 
 
 async def initiate(innie,outie,header):
