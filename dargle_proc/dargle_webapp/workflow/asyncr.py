@@ -45,8 +45,9 @@ async def runner(url, hits, session):
 		response['title'] = "N/A"
 		response['status'] = '-1'
 
-	# returns dict after trycatch
-	return response
+	finally:
+		# return response in every case.
+		return response
 
 
 async def initiate(innie,outie,header):
